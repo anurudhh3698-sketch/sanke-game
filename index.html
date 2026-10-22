@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anurudh Snake Game</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    color: white;
+    background: #101426;
+  }
+  h1 { color: #39ff88; }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 16px auto;
+  }
+  select, button {
+    padding: 10px;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  canvas {
+    width: min(90vw, 400px);
+    height: auto;
+    background: #182238;
+    border: 2px solid #39ff88;
+    border-radius: 10px;
+  }
+  button { background: #39ff88; }
+</style>
+</head>
+<body>
+<h1>🐍 Anurudh Snake</h1>
+<p>Score: <span id="score">0</span></p>
+
+<div class="controls">
+  <select id="snakeColor">
+    <option value="#39ff88">Neon Green</option>
+    <option value="#00cfff">Electric Blue</option>
+    <option value="#ff38d1">Pink</option>
+    <option value="#ff7b22">Fire Orange</option>
+    <option value="#fff">White</option>
+  </select>
+
+  <select id="fruit">
+    <option value="🍎">Apple</option>
+    <option value="🍊">Orange</option>
+    <option value="🍓">Strawberry</option>
+    <option value="🍒">Cherry</option>
+    <option value="🍍">Pineapple</option>
+  </select>
+
+  <select id="theme">
+    <option value="#182238">Night</option>
+    <option value="#123d2b">Jungle</option>
+    <option value="#35164f">Space</option>
+    <option value="#3b2530">Sunset</option>
+  </select>
+
+  <button onclick="startGame()">Restart</button>
+</div>
+
+<canvas id="game" width="400" height="400"></canvas>
+<p>Keyboard se snake chalao: ⬆️ ⬇️ ⬅️ ➡️</p>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const size = 20;
+let snake, food, dx, dy, score, timer, running;
+
+function startGame() {
+  clearInterval(timer);
+  snake = [{x: 200, y: 200},
+           {x: 180, y: 200},
+           {x: 160, y: 200}];
+  dx = size;
+  dy = 0;
+  score = 0;
+  running = true;
+  document.getElementById("score").textContent = score;
+  placeFood();
+  draw();
+  timer = setInterval(tick, 120);
+}
+
+function placeFood() {
+  food = {
+    x: Math.floor(Math.random() * 20) * size,
+    y: Math.floor(Math.random() * 20) * size
+  };
+  if (snake.some(p => p.x === food.x && p.y === food.y)) {
+    placeFood();
+  }
+}
+
+function tick() {
+  if (!running) return;
+
+  const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+  const eating = head.x === food.x && head.y === food.y;
+
+  if (head.x < 0 || head.x >= 400 ||
+      head.y < 0 || head.y >= 400 ||
+      snake.slice(0, eating ? undefined : -1)
+        .some(p => p.x === head.x && p.y === head.y)) {
+    running = false;
+    clearInterval(timer);
+    ctx.fillStyle = "white";
+    ctx.font = "28px Arial";
+    ctx.fillText("Game Over!", 115, 200);
+    return;
+  }
+
+  snake.unshift(head);
+  if (eating) {
+    score += 10;
+    document.getElementById("score").textContent = score;
+    placeFood();
+  } else {
+    snake.pop();
+  }
+  draw();
+}
+
+function draw() {
+  ctx.fillStyle = document.getElementById("theme").value;
+  ctx.fillRect(0, 0, 400, 400);
+
+  ctx.font = "20px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    document.getElementById("fruit").value,
+    food.x + 10, food.y + 10
+  );
+
+  ctx.fillStyle = document.getElementById("snakeColor").value;
+  snake.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.roundRect(p.x + 1, p.y + 1, 18, 18, 5);
+    ctx.fill();
+    if (i === 0) {
+      ctx.fillStyle = "#111";
+      ctx.fillRect(p.x + 5, p.y + 5, 3, 3);
+      ctx.fillRect(p.x + 12, p.y + 5, 3, 3);
+      ctx.fillStyle = document.getElementById("snakeColor").value;
+    }
+  });
+}
+
+document.addEventListener("keydown", e => {
+  const keys = {
+    ArrowUp: [0, -size],
+    ArrowDown: [0, size],
+    ArrowLeft: [-size, 0],
+    ArrowRight: [size, 0]
+  };
+  if (!keys[e.key]) return;
+  e.preventDefault();
+  const [nx, ny] = keys[e.key];
+  if (nx !== -dx || ny !== -dy) {
+    dx = nx;
+    dy = ny;
+  }
+});
+
+document.getElementById("snakeColor").onchange = draw;
+document.getElementById("fruit").onchange = draw;
+document.getElementById("theme").onchange = draw;
+
+startGame();
+</script>
+</body>
+</html>
